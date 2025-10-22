@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaboration Suite</title>
+  <!-- Quill editor CSS -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background: #2563eb; color: white; padding: 15px; text-align: center; font-size: 26px; font-weight: bold; }
+    .tabs { display: flex; background: #e5e7eb; }
+    .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    .tab.active { background: #2563eb; color: white; border-bottom: 3px solid #1d4ed8; }
+    .content { padding: 15px; display: none; }
+    .content.active { display: block; }
+    #editor { height: 300px; background: white; border-radius: 8px; }
+    #whiteboard { border: 1px solid #ccc; cursor: crosshair; border-radius: 8px; }
+    #chatMessages { height: 250px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px; padding: 5px; margin-bottom: 5px; background: white; }
+    #chatInput { flex: 1; padding: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    #chatButton { padding: 6px 12px; border: none; background: #2563eb; color: white; border-radius: 5px; cursor: pointer; }
+    .chatBox { display: flex; gap: 5px; margin-top: 5px; }
+    video { width: 100%; border-radius: 8px; background: black; }
+    button { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>Collaboration Suite</header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="docs">Docs Editor</div>
+    <div class="tab" data-tab="whiteboard">Whiteboard</div>
+    <div class="tab" data-tab="chat">Chat</div>
+    <div class="tab" data-tab="video">Video</div>
+  </div>
+
+  <div class="content active" id="docs">
+    <h2>Docs Editor</h2>
+    <div id="editor"></div>
+  </div>
+
+  <div class="content" id="whiteboard">
+    <h2>Whiteboard</h2>
+    <canvas id="wbCanvas" width="600" height="400"></canvas>
+    <button id="clearWB" style="margin-top:5px; background:#2563eb; color:white; padding:5px 10px; border:none; border-radius:5px;">Clear Whiteboard</button>
+  </div>
+
+  <div class="content" id="chat">
+    <h2>Chat</h2>
+    <div id="chatMessages"></div>
+    <div class="chatBox">
+      <input type="text" id="chatInput" placeholder="Type a message..." />
+      <button id="chatButton">Send</button>
+    </div>
+  </div>
+
+  <div class="content" id="video">
+    <h2>Video</h2>
+    <video id="video" autoplay muted></video>
+    <button id="startVideo" style="margin-top:5px; background:#2563eb; color:white; padding:5px 10px; border:none; border-radius:5px;">Start Webcam</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+  <script>
+    // Tabs functionality
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.content');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        contents.forEach(c => c.classList.remove('active'));
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Docs Editor
+    const quill = new Quill('#editor', { theme: 'snow' });
+
+    // Whiteboard
+    const canvas = document.getElementById('wbCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+    canvas.addEventListener('mousemove', e => { if(drawing){ ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); }});
+    canvas.addEventListener('mouseup', () => { drawing = false; });
+    canvas.addEventListener('mouseleave', () => { drawing = false; });
+    document.getElementById('clearWB').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Chat
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    document.getElementById('chatButton').onclick = () => {
+      const msg = chatInput.value.trim();
+      if(msg){
+        const div = document.createElement('div');
+        div.textContent = `You: ${msg}`;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatInput.value = '';
+      }
+    };
+
+    // Video
+    const video = document.getElementById('video');
+    document.getElementById('startVideo').onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+      } catch(e) {
+        alert('Error accessing webcam: ' + e.message);
+      }
+    };
+  </script>
+</body>
+</html>
